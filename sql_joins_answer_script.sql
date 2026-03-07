@@ -198,12 +198,12 @@ SELECT * FROM assignment.inventory;
 
 		select sum(total_amount) as total_sales
 		from sales;
-	
+	 
 -- 6. Write a query to select distinct membership statuses from the `Customers` table.
 		
 		select distinct membership_status
 		from customers;
-
+		
 -- 7. Write a query to concatenate first and last names of all customers and show the result as `full_name`.
 			
 		select concat(first_name,' ',last_name) as full_name
@@ -222,7 +222,7 @@ SELECT * FROM assignment.inventory;
 
 -- 10. Write a query to count the number of sales for each product from the `Sales` table.
 		
-		select p.product_name, count(s.sale_id) as product_sales
+		select p.product_name, sum(s.quantity_sold) as product_sales
 		from products p
 		join sales s on p.product_id = s.product_id
 		group by p.product_name
@@ -271,78 +271,301 @@ SELECT * FROM assignment.inventory;
 		join products p 
 		on p.product_id = s.product_id;
 		
--- 17. Write a query to perform a self-join on the `Customers` table and find all pairs of customers who have the same membership status.
-
+-- 17. Write a query to perform a self-join on the `Customers` table and 
+--find all pairs of customers who have the same membership status.
+--Need to research more
+		select a.first_name, a.last_name, b.membership_status
+		from customers a
+		inner join customers b
+		on a.customer_id = b.customer_id
+		order by membership_status asc;
 		
 		
 -- 18. Write a query to join the `Sales` and `Products` tables, and calculate the total number of sales for each product.
+		select p.product_name, sum(s.quantity_sold) as total_sales
+		from products p
+		join sales s 
+		on s.product_id = p.product_id
+		group by p.product_name;
 
 -- 19. Write a query to find the products in the `Products` table where the stock quantity is less than 10.
-		
-		
 
+		select * 
+		from products 
+		where stock_quantity < 10;
+		
 -- 20. Write a query to join the `Sales` table and the `Products` table, and find products with sales greater than 5.
-
+		
+		select p.product_name, s.quantity_sold as number_of_sales
+		from products p 
+		join sales s 
+		on s.product_id = p.product_id
+		where quantity_sold > 5;
+		
 -- 21. Write a query to select customers who have purchased products that are either in the 'Electronics' or 'Appliances' category.
-
+		
+		select c.first_name, c.last_name, p.category
+		from customers c 
+		join sales s 
+		on c.customer_id = s.customer_id
+		join products p 
+		on p.product_id = s.product_id
+		where p.category = 'Electronics' or p.category = 'Appliances'
+		order by category asc;
+		
 -- 22. Write a query to calculate the total sales amount per product and group the result by product name.
-
+		
+		select p.product_name, sum(s.total_amount) as sales_amount
+		from sales s
+		join products p
+		on p.product_id = s.product_id
+		group by p.product_name;
+		
 -- 23. Write a query to join the `Sales` table with the `Customers` table and select customers who made a purchase in the year 2023.
-
+		
+		select c.first_name, c.last_name, s.sale_date
+		from customers c
+		join sales s
+		on c.customer_id = s.customer_id
+		where s.sale_date between '2023-01-01' and '2023-12-31';
+		
 -- 24. Write a query to find the customers with the highest total sales in 2023.
+		
+			select c.first_name, c.last_name, s.sale_date, s.total_amount
+			from customers c 
+			join sales s 
+			on s.customer_id = c.customer_id
+			where s.sale_date between '2023-01-01' and '2023-12-31'
+			order by s.total_amount desc;
 
 -- 25. Write a query to join the `Products` and `Sales` tables and select the most expensive product sold.
-
+			
+				select p.product_name, s.total_amount
+				from sales s
+				join products p 
+				on p.product_id = s.product_id
+				order by s.total_amount desc
+				limit 1;
+				
 -- 26. Write a query to find the total number of customers who have purchased products worth more than 500.
+					
+				select count(c.customer_id) as total_customers 
+				from customers c
+				join sales s 
+				on s.customer_id = c.customer_id
+				where s.total_amount > 500;
 
 -- 27. Write a query to join the `Products`, `Sales`, and `Customers` tables and find the total number of sales made by customers who are in the 'Gold' membership tier.
-
+	
+		select 	c.first_name, c.last_name, p.product_name, sum(s.quantity_sold) as total_sales
+		from customers c
+		join sales s
+		on s.customer_id = c.customer_id
+		join products p
+		on p.product_id = s.product_id
+		where c.membership_status = 'Gold'
+		group by c.first_name, c.last_name, p.product_name;
+					
 -- 28. Write a query to join the `Products` and `Inventory` tables and find all products that have low stock (less than 10).
-
+	
+		select p.product_name, i.stock_quantity
+		from products p
+		join inventory i
+		on p.product_id = i.product_id
+		where i.stock_quantity < 10;
+		
 -- 29. Write a query to find customers who have purchased more than 5 products and show the total quantity of products they have bought.
-
+		
+		select c.first_name, c.last_name, p.product_name, sum(s.quantity_sold) as total_products
+		from customers c
+		join sales s
+		on c.customer_id = s.customer_id
+		join products p
+		on p.product_id = s.product_id
+		where s.quantity_sold > 5
+		group by c.first_name, c.last_name, p.product_name;
+		
 -- 30. Write a query to find the average quantity sold per product.
-
+			
+		select p.product_name, avg(s.quantity_sold)
+		from products p
+		natural join sales s
+		group by p.product_name,s.quantity_sold
+		order by s.quantity_sold desc;
+		
 -- 31. Write a query to find the number of sales made in the month of December 2023.
-
+		
+		select sum(quantity_sold) as total__december_sales
+		from sales
+		where sale_date between '2023-12-01' and '2023-12-31'
+		
 -- 32. Write a query to find the total amount spent by each customer in 2023 and list the customers in descending order.
-
+		
+		select c.first_name, c.last_name, s.sale_date, sum(s.total_amount) as total_amount_spent
+		from customers c
+		natural join sales s
+		where s.sale_date between '2023-01-01' and '2023-12-31'
+		group by c.first_name, c.last_name, s.sale_date
+		order by c.first_name asc;
+		
 -- 33. Write a query to find all products that have been sold but have less than 5 units left in stock.
-
+		
+		select p.product_name, p.stock_quantity, s.quantity_sold, (p.stock_quantity - s.quantity_sold) as units_left
+		from products p
+		natural join sales s
+		where (p.stock_quantity - s.quantity_sold) < 5;
+		
 -- 34. Write a query to find the total sales for each product and order the result by the highest sales.
-
+		
+		select p.product_name, s.quantity_sold, s.total_amount
+		from products p
+		natural join sales s
+		order by s.total_amount desc;
+		
 -- 35. Write a query to find all customers who bought products within 7 days of their registration date.
-
+		
+		select c.first_name, c.last_name, p.product_name, c.registration_date,s.sale_date
+		from customers c
+		natural join sales s
+		natural join products p
+		where s.sale_date between c.registration_date and (c.registration_date + 7);
+		
 -- 36. Write a query to join the `Sales` table with the `Products` table and filter the results by products priced between 100 and 500.
-
+			
+		select p.product_name, s.quantity_sold, p.price
+		from products p
+		natural join sales s
+		where p.price between 100 and 500
+		order by p.price asc;
+		
 -- 37. Write a query to find the most frequent customer who made purchases from the `Sales` table.
+		
+		select * 
+		from (select c.first_name, c.last_name, s.quantity_sold,dense_rank() over (order by s.quantity_sold desc) as sales_rank 
+		from customers c
+		natural join sales s)
+		where sales_rank = 1;
 
 -- 38. Write a query to find the total quantity of products sold per customer.
-
+		
+			select c.first_name, c.last_name, p.product_name, sum(s.quantity_sold) as products_sold
+			from customers c
+			natural join sales s
+			natural join products p
+			group by c.first_name, c.last_name, p.product_name
+			
 -- 39. Write a query to find the products with the highest stock and lowest stock, and display them together in a single result set.
-
+	
+			select product_name, stock_quantity
+			from products
+			where stock_quantity = (select max(stock_quantity) from products)
+			union all
+			select product_name, stock_quantity
+			from products
+			where stock_quantity = (select min(stock_quantity) from products);
+			
+			
 -- 40. Write a query to find products whose names contain the word 'Phone' and their total sales.
-
--- 41. Write a query to perform an `INNER JOIN` between `Customers` and `Sales`, then display the total sales amount and the product names for customers in the 'Gold' membership status.
-
+		
+		select p.product_name, s.total_amount
+		from products p
+		natural join sales s
+		where p.product_name like '%phone%';
+		
+-- 41. Write a query to perform an `INNER JOIN` between `Customers` and `Sales`, then display
+--the total sales amount and the product names for customers in the 'Gold' membership status.
+		
+		select c.first_name, c.last_name, c.membership_status, p.product_name, s.total_amount
+		from customers c
+		inner join sales s
+		on s.customer_id = c.customer_id
+		inner join products p
+		on p.product_id = s.product_id
+		where c.membership_status = 'Gold';		
+	
 -- 42. Write a query to find the total sales of products by category.
 
--- 43. Write a query to join the `Products` table with the `Sales` table, and calculate the total sales for each product, grouped by month and year.
-
--- 44. Write a query to join the `Sales` and `Inventory` tables and find products that have been sold but still have stock remaining.
+		select p.product_name, p.category, s.total_amount
+		from products p
+		inner join sales s
+		on p.product_id = s.product_id
+		group by p.category, p.product_name, s.total_amount
+		order by p.category asc;
+			
+-- 43. Write a query to join the `Products` table with the `Sales` table, and 
+--calculate the total sales for each product, grouped by month and year.
+		
+		select 
+		p.product_name,
+		extract (month from s.sale_date) as month,
+		extract (year from s.sale_date) as year,
+		sum(s.total_amount)
+		from products p
+		inner join sales s
+		on p.product_id = s.product_id
+		group by p.product_name,extract (month from s.sale_date), extract (year from s.sale_date),s.total_amount
+		order by extract (year from s.sale_date) asc;
+		
+-- 44. Write a query to join the `Sales` and `Inventory` tables and 
+--find products that have been sold but still have stock remaining
+		
+		select p.product_name, i.stock_quantity, s.total_amount
+		from products p
+		join sales s on p.product_id = s.product_id
+		join inventory i on i.product_id = s.product_id
+		where i.stock_quantity <> 0
+		order by i.stock_quantity asc;
 
 -- 45. Write a query to find the top 5 customers who have made the highest purchases.
-
+		
+		select * from (select c.first_name, 
+								c.last_name,
+								s.total_amount,
+								dense_rank() over (order by s.total_amount desc) as sales_rank
+		from customers c join sales s on s.customer_id = c.customer_id) as ranked_sales
+		where sales_rank = 1;
+	
 -- 46. Write a query to calculate the total number of unique products sold in 2023.
 
+			select distinct count( s.product_id)	as total_products_sold
+			from sales s
+			where s.sale_date between '2023-01-01' and '2023-12-31';
+			
 -- 47. Write a query to find the products that have not been sold in the last 6 months.
+		
+			select p.product_name, s.sale_date
+			from products p
+			join sales s
+			on s.product_id = p.product_id
+			where s.sale_date not between (current_date - interval '6 months') and current_date;
+			
+-- 48. Write a query to select the products with a price range between $200 and $800,
+--and find the total quantity sold for each.
 
--- 48. Write a query to select the products with a price range between $200 and $800, and find the total quantity sold for each.
-
+	   select p.product_name, p.price, sum(s.quantity_sold) as quantity_sold
+	   from products p
+	   natural join sales s
+	   where price between 200 and 800
+	   group by p.product_name, p.price;
+			
 -- 49. Write a query to find the customers who spent the most money in the year 2023.
-
--- 50. Write a query to select the products that have been sold more than 100 times and have a price greater than 200.
-
+ 
+		   select * from (select c.first_name,
+						c.last_name, 
+						s.sale_date, 
+						s.total_amount, 
+						dense_rank() over (order by s.total_amount desc) as sale_rank
+					from customers c natural join sales s where s.sale_date between '2023-01-01' and '2023-12-31') as ranked
+		       where sale_rank = 1;
+			
+-- 50. Write a query to select the products that have been sold more than 100 times and 
+--have a price greater than 200.
+		
+		   select p.product_name, s.quantity_sold, p.price
+		   from products p
+		   natural join sales s
+		   where s.quantity_sold > 100 and p.price > 200
+	
 
 
 
