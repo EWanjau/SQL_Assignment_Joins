@@ -927,10 +927,23 @@ select
 				
 
 -- 79. Show the next sale amount for each sale ordered by sale_date.
+			
+			select
+				product_id,
+				total_amount,
+				lead(total_amount, 1, 0) over(order by sale_date asc) as next_sale_amount
+			from sales;
 
 -- 80. Divide customers into 4 groups based on total spending.
-
-
+			
+			select
+				c.first_name,
+				c.last_name,
+				ntile(4) over (order by s.total_amount desc) as customer_group
+			from customers c
+			join sales s
+			on s.customer_id = c.customer_id
+			
 -- =====================================================
 -- ADVANCED ANALYTICAL QUESTIONS
 -- =====================================================
