@@ -738,46 +738,193 @@ select
 -- 64. Create an intermediate result that calculates the number of purchases per customer,
 --     then identify customers who purchased more than twice.
 		
+		with ctp as 
+		(select 
+			c.first_name,
+			c.last_name,
+			sum(s.quantity_sold) as total_purchases
+			from customers c
+			natural join sales s
+			group by c.first_name, c.last_name
+		)
+		select *
+		from(select * from ctp where total_purchases > 1)
 		
 		
 -- 65. Create an intermediate result that calculates the total quantity sold per product,
 --     then determine which products sold more than the average quantity sold.
-
+		
+		with ctq as
+		(select 
+			p.product_name,
+			sum(s.total_amount) as quantity_sold
+			from sales s
+			natural join products p
+			group by p.product_name
+		)select *
+		from ctq
+		where quantity_sold > (select avg(quantity_sold) from ctq);
+		
 -- 66. Create an intermediate result that calculates total spending per customer,
 --     then determine which customers spent more than the average spending.
-
+		
+		with ctc as 
+		( select
+			c.first_name,
+			c.last_name,
+			sum(s.total_amount) as total_spend
+			from sales s
+			natural join customers c
+			group by c.first_name, c.last_name
+		)select *
+		from ctc
+		where total_spend > (select avg(total_spend) from ctc)
+		
 -- 67. Create an intermediate result that calculates total revenue per product,
 --     then list the products ordered from highest revenue to lowest.
-
+		with ctr as
+		( select 
+			p.product_name,
+			sum(s.total_amount) as total_revenue
+			from sales s
+			natural join products p
+			group by p.product_name
+		)select * 
+		from ctr
+		order by total_revenue desc
+		
 -- 68. Create an intermediate result showing monthly sales totals,
 --     then determine which month had the highest revenue.
-
+		with ctr as(	
+		select
+			p.product_name,
+			extract(month from s.sale_date) as months,
+			sum(s.total_amount) as total_revenue
+		from sales s
+		natural join products p
+		group by p.product_name,months
+		order by months asc)
+		select product_name, months, total_revenue
+		from ctr
+		where total_revenue = (select max(total_revenue) from ctr)
+		
+			
 -- 69. Create an intermediate result that calculates the number of sales per product,
 --     then determine which products were purchased by more than three customers.
-
+		with cpc as (
+		select
+		c.first_name,
+		p.product_name,
+		sum(s.quantity_sold) as total_sales
+		from products p
+		natural join sales s
+		natural join customers c
+		group by c.first_name,p.product_name
+		)select * 
+		from (select product_name, count(distinct first_name) as total_customers from cpc group by product_name) cust
+		where total_customers > 1;
+		
 -- 70. Create an intermediate result showing total quantity sold per product,
 --     then identify products that sold less than the average quantity sold.
-
+			with ctt as(
+			select 
+				p.product_name,
+				sum(s.quantity_sold) as total_products_sold
+			from products p
+			join sales s
+				on s.product_id = p.product_id
+			group by p.product_name
+			)
+			select *
+			from ctt
+			where total_products_sold < (select avg(total_products_sold) from ctt);
 
 -- =====================================================
 -- WINDOW FUNCTION QUESTIONS
 -- =====================================================
 
 -- 71. Rank customers based on the total amount they have spent.
+	
+		select 
+			c.first_name,
+			c.last_name,
+			s.total_amount,
+			rank()over(order by s.total_amount desc) as rank_spend
+		from customers c
+		join sales s
+		on s.customer_id = c.customer_id
 
 -- 72. Rank products based on total quantity sold.
+		
+		select 
+			p.product_name,
+			s.quantity_sold,
+			dense_rank()over(order by s.quantity_sold desc) as qty_rank
+		from products p
+		join sales s
+		on p.product_id = s.product_id
 
 -- 73. Identify the 3rd highest spending customer.
-
+		
+			select * 
+			from(select
+					c.first_name,
+					c.last_name,
+					sum(s.total_amount) as total_spend,
+					dense_rank() over (order by s.total_amount desc) as spend_rank
+				from customers c
+				join sales s
+					on s.customer_id = c.customer_id
+				group by c.first_name,c.last_name,s.total_amount)
+			where spend_rank = 3;
+			
 -- 74. Identify the 2nd most expensive product.
-
+			
+			select *
+			from (select 
+					product_name,
+					price,
+					rank()over(order by price desc) as price_rank
+				from products)
+			where price_rank = 2;
+			
 -- 75. Show the ranking of products within each category based on price.
+			
+			select 
+				product_name,
+				category,
+				price,
+				rank()over(partition by category order by price desc) as product_rank
+			from products;
 
 -- 76. Show the ranking of customers based on the number of purchases they made.
+			
+			select 
+				c.first_name,
+				c.last_name,
+				sum(s.quantity_sold) as total_purchases,
+				dense_rank()over(order by s.quantity_sold desc) as customer_rank
+			from customers c
+			join sales s
+			on s.customer_id = c.customer_id
+			group by c.first_name,c.last_name,s.quantity_sold;
 
 -- 77. Show the running total of sales amounts ordered by sale_date.
+			
+			select
+				sale_date,
+				total_amount,
+				sum(total_amount) over(order by sale_date asc) as running_sum
+			from sales;
 
 -- 78. Show the previous sale amount for each sale ordered by sale_date.
+			
+			select
+				product_id,
+				total_amount,
+				lag(total_amount, 1, 0) over (order by sale_date asc) as previous_sale_amount
+			from sales;
+				
 
 -- 79. Show the next sale amount for each sale ordered by sale_date.
 
